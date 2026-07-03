@@ -1,5 +1,5 @@
 import type { Receta } from '../config/consultas';
-import { getRecipeDisplay } from '../utils/recipeText';
+import { getAverageRating, getRecipeDisplay } from '../utils/recipeText';
 
 interface RecipeCardProps {
     recipe: Receta;
@@ -12,6 +12,7 @@ const fallbackImage =
 
 const RecipeCard = ({ recipe, variant = 'featured', onSelect }: RecipeCardProps) => {
     const display = getRecipeDisplay(recipe);
+    const rating = getAverageRating(recipe);
     const time = Number(recipe.tiempo_preparacion) > 0 ? `${recipe.tiempo_preparacion} min` : 'Tiempo pendiente';
     const portions = Number(recipe.porciones) > 0 ? `${recipe.porciones} porciones` : 'Porciones pendientes';
 
@@ -32,6 +33,7 @@ const RecipeCard = ({ recipe, variant = 'featured', onSelect }: RecipeCardProps)
                     <p>{display.description}</p>
                 </div>
                 <div className="recipe-meta">
+                    <span className="rating-pill">{rating > 0 ? `${rating.toFixed(1)}/5 ★` : 'Sin valoraciones'}</span>
                     <span>{display.country}</span>
                     <span>{time}</span>
                     <span>{portions}</span>

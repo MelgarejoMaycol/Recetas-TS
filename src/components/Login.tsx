@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import type { User } from '../config/consultas';
 import { loginUsuario, obtenerUsuarioLogeado, registroUsuario } from '../config/consultas';
 import '../styles/App.css';
@@ -6,14 +7,20 @@ import DashBoard from './DashBoard';
 
 type FormMode = 'login' | 'register';
 
+interface LoginProps {
+    initialMode?: FormMode;
+}
+
 const initialForm = {
     nombre: '',
     email: '',
     password: '',
 };
 
-const Login = () => {
-    const [mode, setMode] = useState<FormMode>('login');
+const Login = ({ initialMode }: LoginProps) => {
+    const navigate = useNavigate();
+    const location = useLocation();
+    const [mode, setMode] = useState<FormMode>(initialMode ?? 'login');
     const [formData, setFormData] = useState(initialForm);
     const [message, setMessage] = useState('');
     const [error, setError] = useState('');
@@ -49,6 +56,20 @@ const Login = () => {
 
         fetchUser();
     }, [token]);
+
+    useEffect(() => {
+        if (user && userId !== null) {
+            navigate('/dashboard', { replace: true });
+        }
+    }, [user, userId, navigate]);
+
+    useEffect(() => {
+        if (location.pathname === '/register') {
+            setMode('register');
+        } else if (location.pathname === '/login') {
+            setMode('login');
+        }
+    }, [location.pathname]);
 
     const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = event.target;
@@ -101,6 +122,7 @@ const Login = () => {
         setUser(null);
         setUserId(null);
         setMessage('Sesion cerrada.');
+        navigate('/login', { replace: true });
     };
 
     if (user && userId !== null) {
@@ -130,7 +152,7 @@ const Login = () => {
                         type="button"
                         className={mode === 'login' ? 'active' : ''}
                         onClick={() => {
-                            setMode('login');
+                            navigate('/login');
                             setMessage('');
                             setError('');
                         }}
@@ -141,7 +163,7 @@ const Login = () => {
                         type="button"
                         className={mode === 'register' ? 'active' : ''}
                         onClick={() => {
-                            setMode('register');
+                            navigate('/register');
                             setMessage('');
                             setError('');
                         }}

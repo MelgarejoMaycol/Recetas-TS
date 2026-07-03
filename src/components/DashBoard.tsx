@@ -1,21 +1,27 @@
 import { useEffect, useMemo, useState } from 'react';
-import type { Receta, RecipeDetail, User } from '../config/consultas';
+import type { ActualizarRecetaPayload, CategoriaReceta, CrearRecetaCompletaPayload, IngredienteCatalogo, Receta, RecipeDetail, User } from '../config/consultas';
 import {
+    actualizarReceta,
     crearComentario,
     crearFavorito,
     crearReceta,
     eliminarFavorito,
+    eliminarReceta as eliminarRecetaApi,
+    enriquecerRecetasConValoraciones,
+    obtenerCategoriasRecetas,
     obtenerDetalleReceta,
     obtenerFavoritosUsuario,
+    obtenerIngredientesCatalogo,
     obtenerMisRecetas,
-    obtenerRecetasMasRelevantes,
+    obtenerRecetasMasValoradas,
+    obtenerRecetasRecientes,
     obtenerTodasLasRecetasPublicas,
 } from '../config/consultas';
 import '../styles/App.css';
+import { getRecipeSearchText, translateValue } from '../utils/recipeText';
 import FeaturedRecipes from './FeaturedRecipes';
 import MyRecipes from './MyRecipes';
 import RecipeDetailModal from './RecipeDetailModal';
-import { getRecipeSearchText, translateValue } from '../utils/recipeText';
 
 interface DashBoardProps {
     user: User;
@@ -24,15 +30,18 @@ interface DashBoardProps {
     onLogout: () => void;
 }
 
-type ActiveView = 'all' | 'featured' | 'mine';
+type ActiveView = 'featured' | 'recent' | 'favorites' | 'mine';
 
 const DashBoard = ({ user, userId, token, onLogout }: DashBoardProps) => {
     const [featuredRecipes, setFeaturedRecipes] = useState<Receta[]>([]);
+    const [recentRecipes, setRecentRecipes] = useState<Receta[]>([]);
     const [allRecipes, setAllRecipes] = useState<Receta[]>([]);
     const [myRecipes, setMyRecipes] = useState<Receta[]>([]);
+    const [categories, setCategories] = useState<CategoriaReceta[]>([]);
+    const [ingredientsCatalog, setIngredientsCatalog] = useState<IngredienteCatalogo[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
-    const [activeView, setActiveView] = useState<ActiveView>('all');
+    const [activeView, setActiveView] = useState<ActiveView>('featured');
     const [searchTerm, setSearchTerm] = useState('');
     const [difficultyFilter, setDifficultyFilter] = useState('all');
     const [countryFilter, setCountryFilter] = useState('all');
@@ -47,16 +56,28 @@ const DashBoard = ({ user, userId, token, onLogout }: DashBoardProps) => {
         const loadData = async () => {
             setLoading(true);
             try {
-                const [all, featured, mine, favorites] = await Promise.all([
+                const [allRaw, topRated, recent, mineRaw, favorites, recipeCategories, ingredients] = await Promise.all([
                     obtenerTodasLasRecetasPublicas(),
-                    obtenerRecetasMasRelevantes(),
+                    obtenerRecetasMasValoradas(1, 10),
+                    obtenerRecetasRecientes(1, 10),
                     obtenerMisRecetas(userId, token),
                     obtenerFavoritosUsuario(userId, token),
+                    obtenerCategoriasRecetas(),
+                    obtenerIngredientesCatalogo(),
+                ]);
+                const [all, featured, recentWithRatings, mine] = await Promise.all([
+                    enriquecerRecetasConValoraciones(allRaw),
+                    enriquecerRecetasConValoraciones(topRated.data ?? []),
+                    enriquecerRecetasConValoraciones(recent.data ?? []),
+                    enriquecerRecetasConValoraciones(mineRaw.data ?? []),
                 ]);
                 setAllRecipes(all);
-                setFeaturedRecipes(featured.data ?? []);
-                setMyRecipes(mine.data ?? []);
+                setFeaturedRecipes(featured);
+                setRecentRecipes(recentWithRatings);
+                setMyRecipes(mine);
                 setFavoriteRecipeIds(favorites.map((favorite) => favorite.receta_id));
+                setCategories(recipeCategories);
+                setIngredientsCatalog(ingredients);
                 setError('');
             } catch (err) {
                 const error = err as Error & { status?: number; response?: unknown };
@@ -70,11 +91,13 @@ const DashBoard = ({ user, userId, token, onLogout }: DashBoardProps) => {
         loadData();
     }, [userId, token]);
 
-    const handleCreateRecipe = async (payload: Omit<Receta, 'id'>) => {
+    const handleCreateRecipe = async (payload: CrearRecetaCompletaPayload, onProgress?: (progress: number) => void) => {
         try {
-            const newRecipe = await crearReceta(payload, token);
-            setMyRecipes((prev) => [newRecipe, ...prev]);
-            setAllRecipes((prev) => [newRecipe, ...prev]);
+            const newRecipe = await crearReceta(payload, token, onProgress);
+            const enriched = (await enriquecerRecetasConValoraciones([newRecipe]))[0];
+            setMyRecipes((prev) => [enriched, ...prev]);
+            setAllRecipes((prev) => [enriched, ...prev]);
+            setRecentRecipes((prev) => [enriched, ...prev].slice(0, 10));
             setActiveView('mine');
         } catch (err) {
             const error = err as Error & { status?: number; response?: unknown };
@@ -84,8 +107,50 @@ const DashBoard = ({ user, userId, token, onLogout }: DashBoardProps) => {
         }
     };
 
-    const currentRecipes = activeView === 'all' ? allRecipes : activeView === 'featured' ? featuredRecipes : myRecipes;
+    const handleUpdateRecipe = async (recipeId: number, payload: ActualizarRecetaPayload, onProgress?: (progress: number) => void) => {
+        try {
+            const updatedRecipe = await actualizarReceta(recipeId, payload, token, onProgress);
+            const enriched = (await enriquecerRecetasConValoraciones([updatedRecipe]))[0];
+            setMyRecipes((prev) => prev.map((recipe) => recipe.id === recipeId ? { ...recipe, ...enriched } : recipe));
+            setAllRecipes((prev) => prev.map((recipe) => recipe.id === recipeId ? { ...recipe, ...enriched } : recipe));
+            setFeaturedRecipes((prev) => prev.map((recipe) => recipe.id === recipeId ? { ...recipe, ...enriched } : recipe));
+            setRecentRecipes((prev) => prev.map((recipe) => recipe.id === recipeId ? { ...recipe, ...enriched } : recipe));
+        } catch (err) {
+            const error = err as Error & { status?: number; response?: unknown };
+            const statusInfo = error.status ? ` [HTTP ${error.status}]` : '';
+            const detail = error.response ? ` - ${JSON.stringify(error.response)}` : '';
+            setError(`${error.message}${statusInfo}${detail}`);
+        }
+    };
+
+    const handleDeleteRecipe = async (recipeId: number) => {
+        try {
+            await eliminarRecetaApi(recipeId, token);
+            setMyRecipes((prev) => prev.filter((recipe) => recipe.id !== recipeId));
+            setAllRecipes((prev) => prev.filter((recipe) => recipe.id !== recipeId));
+            setFeaturedRecipes((prev) => prev.filter((recipe) => recipe.id !== recipeId));
+            setRecentRecipes((prev) => prev.filter((recipe) => recipe.id !== recipeId));
+            setFavoriteRecipeIds((prev) => prev.filter((id) => id !== recipeId));
+        } catch (err) {
+            const error = err as Error & { status?: number; response?: unknown };
+            const statusInfo = error.status ? ` [HTTP ${error.status}]` : '';
+            const detail = error.response ? ` - ${JSON.stringify(error.response)}` : '';
+            setError(`${error.message}${statusInfo}${detail}`);
+        }
+    };
+
     const filtersAreEmpty = searchTerm.trim() === '' && difficultyFilter === 'all' && countryFilter === 'all';
+    const favoriteRecipes = useMemo(
+        () => allRecipes.filter((recipe) => favoriteRecipeIds.includes(recipe.id)),
+        [allRecipes, favoriteRecipeIds],
+    );
+    const currentRecipes = activeView === 'featured'
+        ? filtersAreEmpty ? featuredRecipes : allRecipes
+        : activeView === 'recent'
+            ? recentRecipes
+            : activeView === 'favorites'
+                ? favoriteRecipes
+                : myRecipes;
 
     const filteredRecipes = useMemo(() => {
         const normalizedSearch = searchTerm.trim().toLowerCase();
@@ -99,7 +164,21 @@ const DashBoard = ({ user, userId, token, onLogout }: DashBoardProps) => {
         });
     }, [countryFilter, currentRecipes, difficultyFilter, searchTerm]);
 
-    const visibleRecipes = activeView === 'all' && filtersAreEmpty ? filteredRecipes.slice(0, 9) : filteredRecipes;
+    const visibleRecipes = useMemo(() => {
+        const sorted = [...filteredRecipes];
+
+        if (activeView === 'recent') {
+            return sorted.sort((a, b) => {
+                const aDate = Date.parse(a.fecha_creacion ?? '');
+                const bDate = Date.parse(b.fecha_creacion ?? '');
+                return Number.isFinite(bDate) && Number.isFinite(aDate)
+                    ? bDate - aDate
+                    : 0;
+            });
+        }
+
+        return sorted.sort((a, b) => Number(b.calificacion_promedio || 0) - Number(a.calificacion_promedio || 0));
+    }, [activeView, filteredRecipes]);
 
     const difficulties = useMemo(
         () => Array.from(new Set(allRecipes.map((recipe) => recipe.dificultad).filter(Boolean))).sort(),
@@ -179,6 +258,23 @@ const DashBoard = ({ user, userId, token, onLogout }: DashBoardProps) => {
         try {
             await crearComentario({ receta_id: selectedRecipe.id, comentario: comment, calificacion: rating }, token);
             await refreshRecipeDetail(selectedRecipe.id);
+            const applyRating = (recipe: Receta) => {
+                if (recipe.id !== selectedRecipe.id) return recipe;
+
+                const previousCount = Number(recipe.total_comentarios || 0);
+                const previousAverage = Number(recipe.calificacion_promedio || 0);
+                const nextCount = previousCount + 1;
+
+                return {
+                    ...recipe,
+                    calificacion_promedio: ((previousAverage * previousCount) + rating) / nextCount,
+                    total_comentarios: nextCount,
+                };
+            };
+            setAllRecipes((prev) => prev.map(applyRating));
+            setFeaturedRecipes((prev) => prev.map(applyRating));
+            setRecentRecipes((prev) => prev.map(applyRating));
+            setMyRecipes((prev) => prev.map(applyRating));
             setActionMessage('Comentario publicado correctamente.');
         } catch (err) {
             const error = err as Error & { status?: number; response?: unknown };
@@ -230,17 +326,24 @@ const DashBoard = ({ user, userId, token, onLogout }: DashBoardProps) => {
                             <div className="view-tabs">
                                 <button
                                     type="button"
-                                    className={activeView === 'all' ? 'active' : ''}
-                                    onClick={() => setActiveView('all')}
-                                >
-                                    Todas
-                                </button>
-                                <button
-                                    type="button"
                                     className={activeView === 'featured' ? 'active' : ''}
                                     onClick={() => setActiveView('featured')}
                                 >
                                     Destacadas
+                                </button>
+                                <button
+                                    type="button"
+                                    className={activeView === 'recent' ? 'active' : ''}
+                                    onClick={() => setActiveView('recent')}
+                                >
+                                    Recientes
+                                </button>
+                                <button
+                                    type="button"
+                                    className={activeView === 'favorites' ? 'active' : ''}
+                                    onClick={() => setActiveView('favorites')}
+                                >
+                                    Favoritas
                                 </button>
                                 <button
                                     type="button"
@@ -282,18 +385,39 @@ const DashBoard = ({ user, userId, token, onLogout }: DashBoardProps) => {
                             </div>
                         </section>
 
-                        {activeView === 'all' ? (
+                        {activeView === 'featured' ? (
                             <FeaturedRecipes
                                 recipes={visibleRecipes}
-                                eyebrow="Todas"
-                                title="Todas las recetas"
-                                copy={filtersAreEmpty ? 'Una muestra inicial de 9 recetas. Usa el buscador o filtros para explorar toda la base.' : 'Resultados desde la base de datos completa, listos para revisar.'}
+                                title={filtersAreEmpty ? 'Recetas destacadas' : 'Resultados de busqueda'}
+                                copy={filtersAreEmpty ? 'Las recetas mejor valoradas. Usa el buscador para explorar toda la base.' : 'Busqueda realizada sobre todas las recetas disponibles.'}
                                 onSelectRecipe={handleSelectRecipe}
                             />
-                        ) : activeView === 'featured' ? (
-                            <FeaturedRecipes recipes={visibleRecipes} onSelectRecipe={handleSelectRecipe} />
+                        ) : activeView === 'recent' ? (
+                            <FeaturedRecipes
+                                recipes={visibleRecipes}
+                                eyebrow="Recientes"
+                                title="Recetas recientes"
+                                copy="Las recetas agregadas mas recientemente."
+                                onSelectRecipe={handleSelectRecipe}
+                            />
+                        ) : activeView === 'favorites' ? (
+                            <FeaturedRecipes
+                                recipes={visibleRecipes}
+                                eyebrow="Favoritas"
+                                title="Mis recetas favoritas"
+                                copy="Tus recetas guardadas para encontrarlas rapido."
+                                onSelectRecipe={handleSelectRecipe}
+                            />
                         ) : (
-                            <MyRecipes recipes={visibleRecipes} onCreate={handleCreateRecipe} onSelectRecipe={handleSelectRecipe} />
+                            <MyRecipes
+                                recipes={visibleRecipes}
+                                categories={categories}
+                                ingredientsCatalog={ingredientsCatalog}
+                                onCreate={handleCreateRecipe}
+                                onUpdate={handleUpdateRecipe}
+                                onDelete={handleDeleteRecipe}
+                                onSelectRecipe={handleSelectRecipe}
+                            />
                         )}
                     </>
                 )}

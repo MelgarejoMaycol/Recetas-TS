@@ -1,6 +1,6 @@
-import { useState } from 'react';
 import type { FormEvent } from 'react';
-import type { RecipeDetail, Receta } from '../config/consultas';
+import { useEffect, useState } from 'react';
+import type { Receta, RecipeDetail } from '../config/consultas';
 import { getIngredientDisplay, getRecipeDisplay, getStepDisplay } from '../utils/recipeText';
 
 interface RecipeDetailModalProps {
@@ -33,6 +33,17 @@ const RecipeDetailModal = ({
     const [rating, setRating] = useState(5);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isFavoriteLoading, setIsFavoriteLoading] = useState(false);
+
+    useEffect(() => {
+        if (!recipe) return;
+
+        const originalOverflow = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+
+        return () => {
+            document.body.style.overflow = originalOverflow;
+        };
+    }, [recipe]);
 
     if (!recipe) return null;
 
@@ -124,7 +135,7 @@ const RecipeDetailModal = ({
                                 </div>
                                 <div>
                                     <span>Calificacion</span>
-                                    <strong>{averageScore > 0 ? averageScore.toFixed(1) : 'Sin datos'}</strong>
+                                    <strong>{averageScore > 0 ? `${averageScore.toFixed(1)}/5 ★` : 'Sin datos'}</strong>
                                 </div>
                             </div>
                         </aside>
@@ -198,7 +209,7 @@ const RecipeDetailModal = ({
                                         <article key={comment.id} className="comment-item">
                                             <div>
                                                 <strong>{comment.nombre_usuario || 'Usuario'}</strong>
-                                                <span>{comment.calificacion}/5</span>
+                                                <span>{`${comment.calificacion}/5 ★`}</span>
                                             </div>
                                             <p>{comment.comentario}</p>
                                         </article>

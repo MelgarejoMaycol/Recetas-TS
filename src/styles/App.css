@@ -337,9 +337,9 @@ button:hover {
 
 .view-tabs {
     display: inline-grid;
-    grid-template-columns: repeat(3, minmax(120px, 1fr));
+    grid-template-columns: repeat(4, minmax(110px, 1fr));
     gap: 8px;
-    width: min(560px, 100%);
+    width: min(680px, 100%);
     padding: 4px;
     border-radius: 8px;
     background: #eef2f6;
@@ -500,9 +500,29 @@ button:hover {
     font-weight: 800;
 }
 
+.recipe-meta .rating-pill {
+    background: #fff7ed;
+    color: #9a3412;
+}
+
+.owned-recipe-item {
+    display: grid;
+    gap: 10px;
+}
+
+.owned-recipe-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
 .create-form {
     padding: 18px;
     box-shadow: none;
+}
+
+.create-form--rich {
+    gap: 18px;
 }
 
 .grid-two,
@@ -517,6 +537,158 @@ button:hover {
 
 .grid-three {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.grid-four {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.image-dropzone {
+    position: relative;
+    display: grid;
+    place-items: center;
+    min-height: 132px;
+    border: 1px dashed #94a3b8;
+    border-radius: 8px;
+    background: #f8fafc;
+    text-align: center;
+    transition: border-color 0.16s ease, background 0.16s ease;
+}
+
+.image-dropzone.dragging {
+    border-color: #0f766e;
+    background: #e7f6f3;
+}
+
+.image-dropzone input {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.image-dropzone label {
+    display: grid;
+    gap: 6px;
+    padding: 18px;
+    color: #455468;
+    pointer-events: none;
+}
+
+.image-dropzone strong {
+    color: #172033;
+    font-size: 1rem;
+}
+
+.image-dropzone span {
+    color: #64748b;
+    font-size: 0.9rem;
+}
+
+.upload-progress {
+    height: 10px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: #e2e8f0;
+}
+
+.upload-progress span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: #0f766e;
+    transition: width 0.2s ease;
+}
+
+.form-subsection {
+    display: grid;
+    gap: 10px;
+    padding: 14px;
+    border: 1px solid #dce4df;
+    border-radius: 8px;
+    background: #fbfcfe;
+}
+
+.subsection-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.subsection-title h3 {
+    margin: 0;
+    font-size: 0.98rem;
+    color: #172033;
+}
+
+.secondary-inline-button,
+.icon-text-button {
+    min-height: 36px;
+    border: 1px solid #cfd8e3;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #0f766e;
+    cursor: pointer;
+    font-weight: 800;
+}
+
+.secondary-inline-button {
+    padding: 8px 12px;
+}
+
+.icon-text-button {
+    padding: 8px 10px;
+    color: #be123c;
+}
+
+.ingredient-row {
+    display: grid;
+    grid-template-columns: minmax(220px, 1fr) minmax(110px, 0.45fr) minmax(110px, 0.45fr) auto;
+    gap: 10px;
+}
+
+.ingredient-row select,
+.ingredient-row input,
+.step-row textarea {
+    width: 100%;
+    min-height: 42px;
+    border: 1px solid #cfd8e3;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #172033;
+    padding: 10px 11px;
+}
+
+.step-row {
+    display: grid;
+    grid-template-columns: 34px 1fr auto;
+    gap: 10px;
+    align-items: start;
+}
+
+.step-row span {
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 999px;
+    background: #0f766e;
+    color: #ffffff;
+    font-weight: 900;
+}
+
+.step-row textarea {
+    min-height: 68px;
+    resize: vertical;
+}
+
+.primary-button:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    transform: none;
 }
 
 .empty-state,
@@ -540,6 +712,7 @@ button:hover {
     padding: 24px;
     background: rgba(15, 23, 42, 0.58);
     backdrop-filter: blur(8px);
+    overscroll-behavior: contain;
 }
 
 .recipe-modal {
@@ -547,6 +720,7 @@ button:hover {
     width: min(980px, 100%);
     max-height: min(90vh, 820px);
     overflow: auto;
+    overscroll-behavior: contain;
     border-radius: 8px;
     background: #f8fafc;
     box-shadow: 0 28px 80px rgba(2, 8, 23, 0.34);
@@ -895,6 +1069,18 @@ button:hover {
         grid-column: 1 / -1;
     }
 
+    .grid-four {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .ingredient-row {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .ingredient-row select {
+        grid-column: 1 / -1;
+    }
+
     .summary-list {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
@@ -957,8 +1143,19 @@ button:hover {
     .filters-row,
     .grid-two,
     .grid-three,
+    .grid-four,
     .recipe-grid {
         grid-template-columns: 1fr;
+    }
+
+    .ingredient-row,
+    .step-row {
+        grid-template-columns: 1fr;
+    }
+
+    .step-row span {
+        width: 30px;
+        height: 30px;
     }
 
     .recipe-card {

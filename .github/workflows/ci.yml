@@ -12,5 +12,5 @@ jobs:
           node-version: '18'
       - name: Install and check
         run: |
-          npm ci
+          npm install
           npm run check

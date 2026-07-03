@@ -20,7 +20,11 @@ const initialForm = {
 const Login = ({ initialMode }: LoginProps) => {
     const navigate = useNavigate();
     const location = useLocation();
-    const [mode, setMode] = useState<FormMode>(initialMode ?? 'login');
+    const mode: FormMode = location.pathname === '/register'
+        ? 'register'
+        : location.pathname === '/login'
+            ? 'login'
+            : initialMode ?? 'login';
     const [formData, setFormData] = useState(initialForm);
     const [message, setMessage] = useState('');
     const [error, setError] = useState('');
@@ -54,22 +58,14 @@ const Login = ({ initialMode }: LoginProps) => {
             }
         };
 
-        fetchUser();
+        void fetchUser();
     }, [token]);
 
     useEffect(() => {
         if (user && userId !== null) {
-            navigate('/dashboard', { replace: true });
+            void navigate('/dashboard', { replace: true });
         }
     }, [user, userId, navigate]);
-
-    useEffect(() => {
-        if (location.pathname === '/register') {
-            setMode('register');
-        } else if (location.pathname === '/login') {
-            setMode('login');
-        }
-    }, [location.pathname]);
 
     const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = event.target;
@@ -105,8 +101,8 @@ const Login = ({ initialMode }: LoginProps) => {
                 });
 
                 setMessage(response.mensaje || 'Registro completado. Puedes iniciar sesion.');
-                setMode('login');
                 setFormData({ ...initialForm, email: formData.email });
+                void navigate('/login', { replace: true });
             }
         } catch (err) {
             setError((err as Error).message);
@@ -122,7 +118,7 @@ const Login = ({ initialMode }: LoginProps) => {
         setUser(null);
         setUserId(null);
         setMessage('Sesion cerrada.');
-        navigate('/login', { replace: true });
+        void navigate('/login', { replace: true });
     };
 
     if (user && userId !== null) {
@@ -152,7 +148,7 @@ const Login = ({ initialMode }: LoginProps) => {
                         type="button"
                         className={mode === 'login' ? 'active' : ''}
                         onClick={() => {
-                            navigate('/login');
+                            void navigate('/login');
                             setMessage('');
                             setError('');
                         }}
@@ -163,7 +159,7 @@ const Login = ({ initialMode }: LoginProps) => {
                         type="button"
                         className={mode === 'register' ? 'active' : ''}
                         onClick={() => {
-                            navigate('/register');
+                            void navigate('/register');
                             setMessage('');
                             setError('');
                         }}
@@ -172,7 +168,7 @@ const Login = ({ initialMode }: LoginProps) => {
                     </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="auth-form">
+                <form onSubmit={(event) => void handleSubmit(event)} className="auth-form">
                     {mode === 'register' && (
                         <label>
                             Nombre
@@ -223,14 +219,14 @@ const Login = ({ initialMode }: LoginProps) => {
                     {mode === 'login' ? (
                         <>
                             No tienes cuenta?{' '}
-                            <button type="button" className="link-button" onClick={() => setMode('register')}>
+                            <button type="button" className="link-button" onClick={() => void navigate('/register')}>
                                 Crear cuenta
                             </button>
                         </>
                     ) : (
                         <>
                             Ya tienes cuenta?{' '}
-                            <button type="button" className="link-button" onClick={() => setMode('login')}>
+                            <button type="button" className="link-button" onClick={() => void navigate('/login')}>
                                 Iniciar sesion
                             </button>
                         </>

@@ -146,14 +146,28 @@ interface ApiError extends Error {
 }
 
 async function parseResponse<T = unknown>(response: Response): Promise<T> {
-    const json = await response.json().catch(() => ({}));
+    let json: unknown = {};
+
+    try {
+        json = await response.json();
+    } catch {
+        json = {};
+    }
+
     if (!response.ok) {
-        const error = new Error(json?.mensaje || json?.error || 'Error del servidor') as ApiError;
+        const details = typeof json === 'object' && json !== null ? json as Record<string, unknown> : {};
+        const errorMessage = typeof details.mensaje === 'string'
+            ? details.mensaje
+            : typeof details.error === 'string'
+                ? details.error
+                : 'Error del servidor';
+        const error = new Error(errorMessage) as ApiError;
         error.status = response.status;
         error.response = json;
         throw error;
     }
-    return json;
+
+    return json as T;
 }
 
 export async function registroUsuario(payload: RegistroData): Promise<ApiResponse> {
@@ -194,6 +208,7 @@ export async function obtenerUsuarioLogeado(token: string): Promise<User> {
     }
 
     if (result && typeof result === 'object' && 'id' in result && 'nombre' in result && 'email' in result) {
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
         return result as User;
     }
 
@@ -301,13 +316,36 @@ function enviarRecetaFormData(
         };
 
         request.onload = () => {
-            const json = JSON.parse(request.responseText || '{}');
+            let json: unknown = {};
+            try {
+                json = JSON.parse(request.responseText || '{}');
+            } catch {
+                json = {};
+            }
+
             if (request.status < 200 || request.status >= 300) {
-                reject(new Error(json?.mensaje || json?.detalle || 'Error al guardar receta'));
+                const details = typeof json === 'object' && json !== null ? (json as Record<string, unknown>) : {};
+                const message = typeof details.mensaje === 'string'
+                    ? details.mensaje
+                    : typeof details.detalle === 'string'
+                        ? details.detalle
+                        : 'Error al guardar receta';
+                reject(new Error(message));
                 return;
             }
 
-            resolve(json.receta ?? json);
+            if (typeof json === 'object' && json !== null && 'receta' in (json as Record<string, unknown>)) {
+                // safe cast after shape check
+                resolve((json as Record<string, unknown>)['receta'] as Receta);
+                return;
+            }
+
+            if (typeof json === 'object' && json !== null) {
+                resolve(json as Receta);
+                return;
+            }
+
+            reject(new Error('Respuesta invalida del servidor'));
         };
 
         request.onerror = () => reject(new Error('No fue posible subir la receta.'));

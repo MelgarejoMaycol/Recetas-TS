@@ -477,6 +477,7 @@ button:hover {
     overflow: hidden;
     color: #58677a;
     line-height: 1.5;
+    line-clamp: 3;
     -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
 }
@@ -788,6 +789,7 @@ button:hover {
     overflow: hidden;
     font-size: 0.95rem;
     line-height: 1.55;
+    line-clamp: 3;
     -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
 }

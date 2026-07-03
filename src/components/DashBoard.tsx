@@ -88,7 +88,7 @@ const DashBoard = ({ user, userId, token, onLogout }: DashBoardProps) => {
                 setLoading(false);
             }
         };
-        loadData();
+        void loadData();
     }, [userId, token]);
 
     const handleCreateRecipe = async (payload: CrearRecetaCompletaPayload, onProgress?: (progress: number) => void) => {
@@ -390,7 +390,7 @@ const DashBoard = ({ user, userId, token, onLogout }: DashBoardProps) => {
                                 recipes={visibleRecipes}
                                 title={filtersAreEmpty ? 'Recetas destacadas' : 'Resultados de busqueda'}
                                 copy={filtersAreEmpty ? 'Las recetas mejor valoradas. Usa el buscador para explorar toda la base.' : 'Busqueda realizada sobre todas las recetas disponibles.'}
-                                onSelectRecipe={handleSelectRecipe}
+                                onSelectRecipe={(recipe) => void handleSelectRecipe(recipe)}
                             />
                         ) : activeView === 'recent' ? (
                             <FeaturedRecipes
@@ -398,7 +398,7 @@ const DashBoard = ({ user, userId, token, onLogout }: DashBoardProps) => {
                                 eyebrow="Recientes"
                                 title="Recetas recientes"
                                 copy="Las recetas agregadas mas recientemente."
-                                onSelectRecipe={handleSelectRecipe}
+                                onSelectRecipe={(recipe) => void handleSelectRecipe(recipe)}
                             />
                         ) : activeView === 'favorites' ? (
                             <FeaturedRecipes
@@ -406,7 +406,7 @@ const DashBoard = ({ user, userId, token, onLogout }: DashBoardProps) => {
                                 eyebrow="Favoritas"
                                 title="Mis recetas favoritas"
                                 copy="Tus recetas guardadas para encontrarlas rapido."
-                                onSelectRecipe={handleSelectRecipe}
+                                onSelectRecipe={(recipe) => void handleSelectRecipe(recipe)}
                             />
                         ) : (
                             <MyRecipes
@@ -416,7 +416,7 @@ const DashBoard = ({ user, userId, token, onLogout }: DashBoardProps) => {
                                 onCreate={handleCreateRecipe}
                                 onUpdate={handleUpdateRecipe}
                                 onDelete={handleDeleteRecipe}
-                                onSelectRecipe={handleSelectRecipe}
+                                onSelectRecipe={(recipe) => void handleSelectRecipe(recipe)}
                             />
                         )}
                     </>

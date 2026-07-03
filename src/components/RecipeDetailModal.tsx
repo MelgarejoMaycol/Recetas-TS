@@ -104,7 +104,7 @@ const RecipeDetailModal = ({
                         <button
                             type="button"
                             className={`favorite-button ${isFavorite ? 'active' : ''}`}
-                            onClick={handleToggleFavorite}
+                            onClick={() => void handleToggleFavorite()}
                             disabled={loading || isFavoriteLoading}
                         >
                             {isFavorite ? 'Quitar de favoritos' : 'Agregar a favoritos'}
@@ -177,7 +177,7 @@ const RecipeDetailModal = ({
 
                         <section className="detail-panel detail-panel--comments">
                             <h3>Comentarios</h3>
-                            <form className="comment-form" onSubmit={handleSubmitComment}>
+                            <form className="comment-form" onSubmit={(event) => void handleSubmitComment(event)}>
                                 <label>
                                     Calificacion
                                     <select value={rating} onChange={(event) => setRating(Number(event.target.value))}>

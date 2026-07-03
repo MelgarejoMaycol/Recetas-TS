@@ -153,7 +153,7 @@ const MyRecipes = ({ recipes, categories, ingredientsCatalog, onCreate, onUpdate
             </div>
 
             {showForm && (
-                <form className="create-form create-form--rich" onSubmit={handleSubmit}>
+                <form className="create-form create-form--rich" onSubmit={(event) => void handleSubmit(event)}>
                     <div
                         className={`image-dropzone ${isDragging ? 'dragging' : ''}`}
                         onDragOver={(event) => {
@@ -171,7 +171,7 @@ const MyRecipes = ({ recipes, categories, ingredientsCatalog, onCreate, onUpdate
                             id="recipe-image"
                             type="file"
                             accept="image/*"
-                            onChange={(event) => handleFile(event.target.files?.[0])}
+                            onChange={(event) => void handleFile(event.target.files?.[0])}
                         />
                         <label htmlFor="recipe-image">
                             <strong>{imageFile ? imageFile.name : editingRecipe ? 'Imagen actual o selecciona una nueva' : 'Arrastra una imagen o seleccionala'}</strong>
@@ -230,88 +230,88 @@ const MyRecipes = ({ recipes, categories, ingredientsCatalog, onCreate, onUpdate
                     </div>
 
                     {!editingRecipe && (
-                    <div className="form-subsection">
-                        <div className="subsection-title">
-                            <h3>Ingredientes</h3>
-                            <button
-                                type="button"
-                                className="secondary-inline-button"
-                                onClick={() => setIngredients((prev) => [...prev, { ingrediente_id: 0, cantidad: '', unidad: '' }])}
-                            >
-                                Agregar
-                            </button>
-                        </div>
-                        {ingredients.map((ingredient, index) => (
-                            <div className="ingredient-row" key={`ingredient-${index}`}>
-                                <select
-                                    value={ingredient.ingrediente_id}
-                                    onChange={(event) => setIngredients((prev) => prev.map((item, itemIndex) => (
-                                        itemIndex === index ? { ...item, ingrediente_id: Number(event.target.value) } : item
-                                    )))}
-                                >
-                                    <option value={0}>Ingrediente</option>
-                                    {sortedIngredients.map((item) => (
-                                        <option key={item.id} value={item.id}>{translateValue(item.nombre)}</option>
-                                    ))}
-                                </select>
-                                <input
-                                    value={ingredient.cantidad}
-                                    onChange={(event) => setIngredients((prev) => prev.map((item, itemIndex) => (
-                                        itemIndex === index ? { ...item, cantidad: event.target.value } : item
-                                    )))}
-                                    placeholder="Cantidad"
-                                />
-                                <input
-                                    value={ingredient.unidad}
-                                    onChange={(event) => setIngredients((prev) => prev.map((item, itemIndex) => (
-                                        itemIndex === index ? { ...item, unidad: event.target.value } : item
-                                    )))}
-                                    placeholder="Unidad"
-                                />
+                        <div className="form-subsection">
+                            <div className="subsection-title">
+                                <h3>Ingredientes</h3>
                                 <button
                                     type="button"
-                                    className="icon-text-button"
-                                    onClick={() => setIngredients((prev) => prev.length > 1 ? prev.filter((_, itemIndex) => itemIndex !== index) : prev)}
+                                    className="secondary-inline-button"
+                                    onClick={() => setIngredients((prev) => [...prev, { ingrediente_id: 0, cantidad: '', unidad: '' }])}
                                 >
-                                    Quitar
+                                    Agregar
                                 </button>
                             </div>
-                        ))}
-                    </div>
+                            {ingredients.map((ingredient, index) => (
+                                <div className="ingredient-row" key={`ingredient-${index}`}>
+                                    <select
+                                        value={ingredient.ingrediente_id}
+                                        onChange={(event) => setIngredients((prev) => prev.map((item, itemIndex) => (
+                                            itemIndex === index ? { ...item, ingrediente_id: Number(event.target.value) } : item
+                                        )))}
+                                    >
+                                        <option value={0}>Ingrediente</option>
+                                        {sortedIngredients.map((item) => (
+                                            <option key={item.id} value={item.id}>{translateValue(item.nombre)}</option>
+                                        ))}
+                                    </select>
+                                    <input
+                                        value={ingredient.cantidad}
+                                        onChange={(event) => setIngredients((prev) => prev.map((item, itemIndex) => (
+                                            itemIndex === index ? { ...item, cantidad: event.target.value } : item
+                                        )))}
+                                        placeholder="Cantidad"
+                                    />
+                                    <input
+                                        value={ingredient.unidad}
+                                        onChange={(event) => setIngredients((prev) => prev.map((item, itemIndex) => (
+                                            itemIndex === index ? { ...item, unidad: event.target.value } : item
+                                        )))}
+                                        placeholder="Unidad"
+                                    />
+                                    <button
+                                        type="button"
+                                        className="icon-text-button"
+                                        onClick={() => setIngredients((prev) => prev.length > 1 ? prev.filter((_, itemIndex) => itemIndex !== index) : prev)}
+                                    >
+                                        Quitar
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
                     )}
 
                     {!editingRecipe && (
-                    <div className="form-subsection">
-                        <div className="subsection-title">
-                            <h3>Elaboracion</h3>
-                            <button
-                                type="button"
-                                className="secondary-inline-button"
-                                onClick={() => setSteps((prev) => [...prev, { descripcion: '' }])}
-                            >
-                                Agregar paso
-                            </button>
-                        </div>
-                        {steps.map((step, index) => (
-                            <div className="step-row" key={`step-${index}`}>
-                                <span>{index + 1}</span>
-                                <textarea
-                                    value={step.descripcion}
-                                    onChange={(event) => setSteps((prev) => prev.map((item, itemIndex) => (
-                                        itemIndex === index ? { descripcion: event.target.value } : item
-                                    )))}
-                                    placeholder="Describe este paso"
-                                />
+                        <div className="form-subsection">
+                            <div className="subsection-title">
+                                <h3>Elaboracion</h3>
                                 <button
                                     type="button"
-                                    className="icon-text-button"
-                                    onClick={() => setSteps((prev) => prev.length > 1 ? prev.filter((_, itemIndex) => itemIndex !== index) : prev)}
+                                    className="secondary-inline-button"
+                                    onClick={() => setSteps((prev) => [...prev, { descripcion: '' }])}
                                 >
-                                    Quitar
+                                    Agregar paso
                                 </button>
                             </div>
-                        ))}
-                    </div>
+                            {steps.map((step, index) => (
+                                <div className="step-row" key={`step-${index}`}>
+                                    <span>{index + 1}</span>
+                                    <textarea
+                                        value={step.descripcion}
+                                        onChange={(event) => setSteps((prev) => prev.map((item, itemIndex) => (
+                                            itemIndex === index ? { descripcion: event.target.value } : item
+                                        )))}
+                                        placeholder="Describe este paso"
+                                    />
+                                    <button
+                                        type="button"
+                                        className="icon-text-button"
+                                        onClick={() => setSteps((prev) => prev.length > 1 ? prev.filter((_, itemIndex) => itemIndex !== index) : prev)}
+                                    >
+                                        Quitar
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
                     )}
 
                     <button className="primary-button" type="submit" disabled={!canSubmit}>
@@ -329,7 +329,7 @@ const MyRecipes = ({ recipes, categories, ingredientsCatalog, onCreate, onUpdate
                                 <button type="button" className="secondary-inline-button" onClick={() => startEdit(recipe)}>
                                     Editar
                                 </button>
-                                <button type="button" className="icon-text-button" onClick={() => handleDelete(recipe)}>
+                                <button type="button" className="icon-text-button" onClick={() => void handleDelete(recipe)}>
                                     Eliminar
                                 </button>
                             </div>

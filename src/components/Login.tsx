@@ -159,11 +159,11 @@ const Login = ({ initialMode }: LoginProps) => {
 
                 <div className="demo-entry">
                     <div>
-                        <strong>Quieres revisar la aplicacion rapidamente?</strong>
-                        <p>Explora recetas, ingredientes, preparaciones y comentarios sin registrarte.</p>
+                        <strong>Prueba la aplicacion sin crear una cuenta</strong>
+                        <p>Ideal para una revision rapida: explora recetas, ingredientes, preparaciones y comentarios.</p>
                     </div>
                     <button type="button" className="demo-button" onClick={() => void navigate('/demo')}>
-                        Explorar sin registro
+                        Ver demo
                     </button>
                 </div>
 

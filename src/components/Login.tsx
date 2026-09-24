@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import type { User } from '../config/consultas';
 import { loginUsuario, obtenerUsuarioLogeado, registroUsuario } from '../config/consultas';
+import { getServerStatusMessage, useServerStatus } from '../hooks/useServerStatus';
 import '../styles/App.css';
 import DashBoard from './DashBoard';
 
@@ -29,6 +30,8 @@ const Login = ({ initialMode }: LoginProps) => {
     const [message, setMessage] = useState('');
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const { status: serverStatus, retry: retryServer } = useServerStatus();
+    const serverReady = serverStatus === 'ready';
     const [token, setToken] = useState<string>(() => localStorage.getItem('token') || '');
     const [user, setUser] = useState<User | null>(null);
     const [userId, setUserId] = useState<number | null>(() => {
@@ -77,6 +80,13 @@ const Login = ({ initialMode }: LoginProps) => {
         setMessage('');
         setError('');
         setIsLoading(true);
+
+        if (!serverReady) {
+            setError(getServerStatusMessage(serverStatus));
+            retryServer();
+            setIsLoading(false);
+            return;
+        }
 
         try {
             if (mode === 'login') {
@@ -143,6 +153,30 @@ const Login = ({ initialMode }: LoginProps) => {
                         : 'Registrate y comienza a anotar y administrar tus platos favoritos.'}
                 </p>
 
+                <div className="demo-entry">
+                    <div>
+                        <strong>Quieres revisar la aplicacion rapidamente?</strong>
+                        <p>Explora recetas, ingredientes, preparaciones y comentarios sin registrarte.</p>
+                    </div>
+                    <button type="button" className="demo-button" onClick={() => void navigate('/demo')}>
+                        Explorar sin registro
+                    </button>
+                </div>
+
+                {serverStatus !== 'ready' && (
+                    <div className={`server-status server-status--${serverStatus}`}>
+                        <div>
+                            <strong>{serverStatus === 'starting' ? 'Encendiendo servidor' : 'Comprobando servidor'}</strong>
+                            <p>{getServerStatusMessage(serverStatus)}</p>
+                        </div>
+                        {serverStatus === 'unavailable' && (
+                            <button type="button" className="secondary-inline-button" onClick={retryServer}>
+                                Reintentar
+                            </button>
+                        )}
+                    </div>
+                )}
+
                 <div className="auth-switch">
                     <button
                         type="button"
@@ -207,8 +241,14 @@ const Login = ({ initialMode }: LoginProps) => {
                         />
                     </label>
 
-                    <button type="submit" disabled={isLoading}>
-                        {isLoading ? 'Procesando...' : mode === 'login' ? 'Entrar' : 'Registrarse'}
+                    <button type="submit" disabled={isLoading || !serverReady}>
+                        {isLoading
+                            ? 'Procesando...'
+                            : !serverReady
+                                ? 'Esperando servidor...'
+                                : mode === 'login'
+                                    ? 'Entrar'
+                                    : 'Registrarse'}
                     </button>
                 </form>
 

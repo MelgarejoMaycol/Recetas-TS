@@ -10,8 +10,9 @@ interface RecipeDetailModalProps {
     error: string;
     actionMessage: string;
     isFavorite: boolean;
-    onToggleFavorite: () => Promise<void>;
-    onCreateComment: (comment: string, rating: number) => Promise<void>;
+    readOnly?: boolean;
+    onToggleFavorite?: () => Promise<void>;
+    onCreateComment?: (comment: string, rating: number) => Promise<void>;
     onClose: () => void;
 }
 
@@ -25,6 +26,7 @@ const RecipeDetailModal = ({
     error,
     actionMessage,
     isFavorite,
+    readOnly = false,
     onToggleFavorite,
     onCreateComment,
     onClose,
@@ -63,6 +65,8 @@ const RecipeDetailModal = ({
         const cleanComment = comment.trim();
         if (cleanComment.length < 2) return;
 
+        if (!onCreateComment) return;
+
         setIsSubmitting(true);
         await onCreateComment(cleanComment, rating);
         setComment('');
@@ -71,6 +75,7 @@ const RecipeDetailModal = ({
     };
 
     const handleToggleFavorite = async () => {
+        if (!onToggleFavorite) return;
         setIsFavoriteLoading(true);
         await onToggleFavorite();
         setIsFavoriteLoading(false);
@@ -101,14 +106,16 @@ const RecipeDetailModal = ({
                             <span>{currentRecipe.porciones || 0} porciones</span>
                             <span>{display.difficulty}</span>
                         </div>
-                        <button
-                            type="button"
-                            className={`favorite-button ${isFavorite ? 'active' : ''}`}
-                            onClick={() => void handleToggleFavorite()}
-                            disabled={loading || isFavoriteLoading}
-                        >
-                            {isFavorite ? 'Quitar de favoritos' : 'Agregar a favoritos'}
-                        </button>
+                        {!readOnly && (
+                            <button
+                                type="button"
+                                className={`favorite-button ${isFavorite ? 'active' : ''}`}
+                                onClick={() => void handleToggleFavorite()}
+                                disabled={loading || isFavoriteLoading}
+                            >
+                                {isFavorite ? 'Quitar de favoritos' : 'Agregar a favoritos'}
+                            </button>
+                        )}
                     </div>
                 </div>
 
@@ -177,32 +184,38 @@ const RecipeDetailModal = ({
 
                         <section className="detail-panel detail-panel--comments">
                             <h3>Comentarios</h3>
-                            <form className="comment-form" onSubmit={(event) => void handleSubmitComment(event)}>
-                                <label>
-                                    Calificacion
-                                    <select value={rating} onChange={(event) => setRating(Number(event.target.value))}>
-                                        <option value={5}>5 - Excelente</option>
-                                        <option value={4}>4 - Muy buena</option>
-                                        <option value={3}>3 - Buena</option>
-                                        <option value={2}>2 - Regular</option>
-                                        <option value={1}>1 - Baja</option>
-                                    </select>
-                                </label>
-                                <label>
-                                    Comentario
-                                    <textarea
-                                        value={comment}
-                                        onChange={(event) => setComment(event.target.value)}
-                                        placeholder="Escribe tu opinion sobre esta receta"
-                                        minLength={2}
-                                        maxLength={1000}
-                                        required
-                                    />
-                                </label>
-                                <button type="submit" className="primary-button" disabled={isSubmitting || comment.trim().length < 2}>
-                                    {isSubmitting ? 'Publicando...' : 'Publicar comentario'}
-                                </button>
-                            </form>
+                            {readOnly ? (
+                                <div className="demo-readonly-note">
+                                    Estas viendo el modo de exploracion. Inicia sesion para guardar favoritos o publicar comentarios.
+                                </div>
+                            ) : (
+                                <form className="comment-form" onSubmit={(event) => void handleSubmitComment(event)}>
+                                    <label>
+                                        Calificacion
+                                        <select value={rating} onChange={(event) => setRating(Number(event.target.value))}>
+                                            <option value={5}>5 - Excelente</option>
+                                            <option value={4}>4 - Muy buena</option>
+                                            <option value={3}>3 - Buena</option>
+                                            <option value={2}>2 - Regular</option>
+                                            <option value={1}>1 - Baja</option>
+                                        </select>
+                                    </label>
+                                    <label>
+                                        Comentario
+                                        <textarea
+                                            value={comment}
+                                            onChange={(event) => setComment(event.target.value)}
+                                            placeholder="Escribe tu opinion sobre esta receta"
+                                            minLength={2}
+                                            maxLength={1000}
+                                            required
+                                        />
+                                    </label>
+                                    <button type="submit" className="primary-button" disabled={isSubmitting || comment.trim().length < 2}>
+                                        {isSubmitting ? 'Publicando...' : 'Publicar comentario'}
+                                    </button>
+                                </form>
+                            )}
                             {comments.length > 0 ? (
                                 <div className="comment-list">
                                     {comments.slice(0, 4).map((comment) => (

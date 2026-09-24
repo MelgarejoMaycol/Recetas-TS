@@ -143,6 +143,42 @@ export interface ApiResponse<T = unknown> {
 interface ApiError extends Error {
     status?: number;
     response?: unknown;
+    code?: 'SERVER_UNAVAILABLE';
+}
+
+export const SERVER_STARTING_MESSAGE =
+    'El servidor de recetas parece estar en reposo. Lo estamos encendiendo; puede tardar unos minutos. Reintentaremos automaticamente.';
+
+function createServerUnavailableError(): ApiError {
+    const error = new Error(SERVER_STARTING_MESSAGE) as ApiError;
+    error.code = 'SERVER_UNAVAILABLE';
+    return error;
+}
+
+async function apiFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+    try {
+        return await globalThis.fetch(input, init);
+    } catch {
+        throw createServerUnavailableError();
+    }
+}
+
+export async function comprobarServidorActivo(timeoutMs = 6000): Promise<boolean> {
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), timeoutMs);
+
+    try {
+        const response = await globalThis.fetch(`${ApoiLink}/health`, {
+            method: 'GET',
+            cache: 'no-store',
+            signal: controller.signal,
+        });
+        return response.ok;
+    } catch {
+        return false;
+    } finally {
+        window.clearTimeout(timeout);
+    }
 }
 
 async function parseResponse<T = unknown>(response: Response): Promise<T> {
@@ -155,12 +191,21 @@ async function parseResponse<T = unknown>(response: Response): Promise<T> {
     }
 
     if (!response.ok) {
+        if ([502, 503, 504].includes(response.status)) {
+            const error = createServerUnavailableError();
+            error.status = response.status;
+            error.response = json;
+            throw error;
+        }
+
         const details = typeof json === 'object' && json !== null ? json as Record<string, unknown> : {};
-        const errorMessage = typeof details.mensaje === 'string'
-            ? details.mensaje
-            : typeof details.error === 'string'
-                ? details.error
-                : 'Error del servidor';
+        const errorMessage = typeof details.detalle === 'string' && response.status < 500
+            ? details.detalle
+            : typeof details.mensaje === 'string'
+                ? details.mensaje
+                : typeof details.error === 'string'
+                    ? details.error
+                    : 'No fue posible completar la solicitud.';
         const error = new Error(errorMessage) as ApiError;
         error.status = response.status;
         error.response = json;
@@ -171,7 +216,7 @@ async function parseResponse<T = unknown>(response: Response): Promise<T> {
 }
 
 export async function registroUsuario(payload: RegistroData): Promise<ApiResponse> {
-    const response = await fetch(`${ApoiLink}/api/usuarios`, {
+    const response = await apiFetch(`${ApoiLink}/api/usuarios`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -183,7 +228,7 @@ export async function registroUsuario(payload: RegistroData): Promise<ApiRespons
 }
 
 export async function loginUsuario(payload: LoginData): Promise<ApiResponse> {
-    const response = await fetch(`${ApoiLink}/api/usuarios/login`, {
+    const response = await apiFetch(`${ApoiLink}/api/usuarios/login`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -195,7 +240,7 @@ export async function loginUsuario(payload: LoginData): Promise<ApiResponse> {
 }
 
 export async function obtenerUsuarioLogeado(token: string): Promise<User> {
-    const response = await fetch(`${ApoiLink}/api/usuarios/me`, {
+    const response = await apiFetch(`${ApoiLink}/api/usuarios/me`, {
         method: 'GET',
         headers: {
             Authorization: `Bearer ${token}`,
@@ -216,7 +261,7 @@ export async function obtenerUsuarioLogeado(token: string): Promise<User> {
 }
 
 export async function obtenerRecetasPublicas(): Promise<RecetasResponse> {
-    const response = await fetch(`${ApoiLink}/api/recetas?page=1&limit=9`, {
+    const response = await apiFetch(`${ApoiLink}/api/recetas?page=1&limit=9`, {
         method: 'GET',
     });
     return parseResponse<RecetasResponse>(response);
@@ -229,7 +274,7 @@ async function obtenerListaPaginada<T>(path: string, limit = 100, token?: string
 
     do {
         const separator = path.includes('?') ? '&' : '?';
-        const response = await fetch(`${ApoiLink}${path}${separator}page=${page}&limit=${limit}`, {
+        const response = await apiFetch(`${ApoiLink}${path}${separator}page=${page}&limit=${limit}`, {
             method: 'GET',
             headers: token ? { Authorization: `Bearer ${token}` } : undefined,
         });
@@ -247,21 +292,21 @@ export async function obtenerTodasLasRecetasPublicas(): Promise<Receta[]> {
 }
 
 export async function obtenerRecetasMasValoradas(page = 1, limit = 10): Promise<RecetasResponse> {
-    const response = await fetch(`${ApoiLink}/api/recetas/mas-valoradas?page=${page}&limit=${limit}`, {
+    const response = await apiFetch(`${ApoiLink}/api/recetas/mas-valoradas?page=${page}&limit=${limit}`, {
         method: 'GET',
     });
     return parseResponse<RecetasResponse>(response);
 }
 
 export async function obtenerRecetasRecientes(page = 1, limit = 10): Promise<RecetasResponse> {
-    const response = await fetch(`${ApoiLink}/api/recetas/recientes?page=${page}&limit=${limit}`, {
+    const response = await apiFetch(`${ApoiLink}/api/recetas/recientes?page=${page}&limit=${limit}`, {
         method: 'GET',
     });
     return parseResponse<RecetasResponse>(response);
 }
 
 export async function obtenerRecetasMasRelevantes(): Promise<RecetasResponse> {
-    const response = await fetch(`${ApoiLink}/api/comentarios/mejores-recetas`, {
+    const response = await apiFetch(`${ApoiLink}/api/comentarios/mejores-recetas`, {
         method: 'GET',
     });
 
@@ -276,7 +321,7 @@ export async function obtenerRecetasMasRelevantes(): Promise<RecetasResponse> {
 }
 
 export async function obtenerMisRecetas(usuarioId: number, token: string): Promise<RecetasResponse> {
-    const response = await fetch(`${ApoiLink}/api/recetas/mis-recetas/${usuarioId}?page=1&limit=10`, {
+    const response = await apiFetch(`${ApoiLink}/api/recetas/mis-recetas/${usuarioId}?page=1&limit=10`, {
         method: 'GET',
         headers: {
             Authorization: `Bearer ${token}`,
@@ -362,7 +407,7 @@ export async function obtenerIngredientesCatalogo(): Promise<IngredienteCatalogo
 }
 
 export async function agregarIngredienteAReceta(recetaId: number, ingrediente: RecetaIngredientePayload, token: string): Promise<void> {
-    const response = await fetch(`${ApoiLink}/api/recetas-ingredientes`, {
+    const response = await apiFetch(`${ApoiLink}/api/recetas-ingredientes`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -380,7 +425,7 @@ export async function agregarIngredienteAReceta(recetaId: number, ingrediente: R
 }
 
 export async function agregarPreparacionAReceta(recetaId: number, preparacion: PreparacionPayload, index: number, token: string): Promise<void> {
-    const response = await fetch(`${ApoiLink}/api/preparaciones`, {
+    const response = await apiFetch(`${ApoiLink}/api/preparaciones`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -424,7 +469,7 @@ export async function actualizarReceta(
 }
 
 export async function eliminarReceta(recipeId: number, token: string): Promise<void> {
-    const response = await fetch(`${ApoiLink}/api/recetas/${recipeId}`, {
+    const response = await apiFetch(`${ApoiLink}/api/recetas/${recipeId}`, {
         method: 'DELETE',
         headers: {
             Authorization: `Bearer ${token}`,
@@ -439,7 +484,7 @@ export async function obtenerFavoritosUsuario(usuarioId: number, token: string):
 }
 
 export async function crearFavorito(recetaId: number, token: string): Promise<FavoritoUsuario> {
-    const response = await fetch(`${ApoiLink}/api/favoritos`, {
+    const response = await apiFetch(`${ApoiLink}/api/favoritos`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -453,7 +498,7 @@ export async function crearFavorito(recetaId: number, token: string): Promise<Fa
 }
 
 export async function eliminarFavorito(usuarioId: number, recetaId: number, token: string): Promise<void> {
-    const response = await fetch(`${ApoiLink}/api/favoritos/usuario/${usuarioId}/receta/${recetaId}`, {
+    const response = await apiFetch(`${ApoiLink}/api/favoritos/usuario/${usuarioId}/receta/${recetaId}`, {
         method: 'DELETE',
         headers: {
             Authorization: `Bearer ${token}`,
@@ -464,7 +509,7 @@ export async function eliminarFavorito(usuarioId: number, recetaId: number, toke
 }
 
 export async function crearComentario(payload: ComentarioPayload, token: string): Promise<ComentarioReceta> {
-    const response = await fetch(`${ApoiLink}/api/comentarios`, {
+    const response = await apiFetch(`${ApoiLink}/api/comentarios`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -512,11 +557,11 @@ export async function enriquecerRecetasConValoraciones(recipes: Receta[]): Promi
 
 export async function obtenerDetalleReceta(recetaId: number): Promise<RecipeDetail> {
     const [recipe, ingredients, preparations, comments, favorites] = await Promise.all([
-        fetch(`${ApoiLink}/api/recetas/${recetaId}`, { method: 'GET' }).then((response) => parseResponse<Receta>(response)),
+        apiFetch(`${ApoiLink}/api/recetas/${recetaId}`, { method: 'GET' }).then((response) => parseResponse<Receta>(response)),
         obtenerListaPaginada<IngredienteReceta>(`/api/recetas-ingredientes/receta/${recetaId}`, 100),
         obtenerListaPaginada<PreparacionReceta>(`/api/preparaciones/receta/${recetaId}`, 100),
         obtenerComentariosReceta(recetaId),
-        fetch(`${ApoiLink}/api/favoritos/receta/${recetaId}/count`, { method: 'GET' })
+        apiFetch(`${ApoiLink}/api/favoritos/receta/${recetaId}/count`, { method: 'GET' })
             .then((response) => parseResponse<{ total_favoritos?: number }>(response))
             .catch(() => ({ total_favoritos: 0 })),
     ]);

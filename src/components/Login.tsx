@@ -40,7 +40,7 @@ const Login = ({ initialMode }: LoginProps) => {
     });
 
     useEffect(() => {
-        if (!token) return;
+        if (!token || !serverReady) return;
 
         const fetchUser = async () => {
             try {
@@ -50,19 +50,23 @@ const Login = ({ initialMode }: LoginProps) => {
                 localStorage.setItem('userId', String(profile.id));
                 setError('');
             } catch (err) {
-                const error = err as Error & { status?: number; response?: unknown };
-                const statusInfo = error.status ? ` [HTTP ${error.status}]` : '';
-                const detail = error.response ? ` - ${JSON.stringify(error.response)}` : '';
-                setError(`${error.message}${statusInfo}${detail}`);
-                setToken('');
-                localStorage.removeItem('token');
-                localStorage.removeItem('userId');
-                setUserId(null);
+                const error = err as Error & { status?: number; response?: unknown; code?: string };
+
+                if (error.status === 401 || error.status === 403) {
+                    setToken('');
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('userId');
+                    setUserId(null);
+                    setError('Tu sesion vencio. Inicia sesion nuevamente.');
+                    return;
+                }
+
+                setError(error.message);
             }
         };
 
         void fetchUser();
-    }, [token]);
+    }, [token, serverReady]);
 
     useEffect(() => {
         if (user && userId !== null) {

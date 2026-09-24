@@ -1,5 +1,6 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import Login from './components/Login';
+import Demo from './components/Demo';
 
 const App = () => (
     <BrowserRouter>
@@ -7,6 +8,7 @@ const App = () => (
             <Route path="/" element={<Navigate to="/login" replace />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Login initialMode="register" />} />
+            <Route path="/demo" element={<Demo />} />
             <Route path="/dashboard" element={<Login />} />
             <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>

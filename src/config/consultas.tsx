@@ -173,7 +173,10 @@ export async function comprobarServidorActivo(timeoutMs = 6000): Promise<boolean
             cache: 'no-store',
             signal: controller.signal,
         });
-        return response.ok;
+        // Cualquier respuesta < 500 confirma que Render ya esta atendiendo peticiones.
+        // Esto mantiene compatibilidad mientras el backend desplegado aun no tenga /health:
+        // un 404 en /health significa que el servidor esta despierto, no apagado.
+        return response.status < 500;
     } catch {
         return false;
     } finally {

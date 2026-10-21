@@ -18,16 +18,17 @@ Scripts importantes:
 - `npm run lint` — ejecuta ESLint
 - `npm run build` — compila para producción (TypeScript + Vite build)
 - `npm run check` — `lint` + `build`
+- `npm test` — pruebas reales de traducción, presentación, puntuación, ingredientes y búsqueda
 
 Archivos importantes:
 - `src/` — código fuente React/TSX
 - `src/config/consultas.tsx` — cliente API y utilidades de red
 - `src/utils/recipeText.ts` — utilidades de traducción e interfaz de presentación
 - `src/styles/App.css` — estilos principales
-- `.github/workflows/ci.yml` — workflow CI para lint y build
+- `.github/workflows/ci.yml` — workflow CI para lint, pruebas y build
 
 Notas de despliegue:
-- La CI en GitHub Actions usa Node.js 20 para compatibilidad con Vite y dependencias.
+- La CI en GitHub Actions usa Node.js 24, instalación reproducible con `npm ci`, lint, pruebas TypeScript y build.
 - Si usas Vercel, la app ya está desplegada en la URL indicada.
 
 Contactar:

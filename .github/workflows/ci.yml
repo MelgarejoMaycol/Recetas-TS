@@ -1,16 +1,26 @@
-name: CI
-
-on: [push, pull_request]
-
+name: React + TypeScript CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
 jobs:
-  check:
+  test-and-build:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
-      - name: Install and check
-        run: |
-          npm install
-          npm run check
+          node-version: '24'
+          cache: npm
+      - name: Install reproducible dependencies
+        run: npm ci
+      - name: ESLint
+        run: npm run lint
+      - name: TypeScript behavior tests
+        run: npm test
+      - name: TypeScript strict build
+        run: npm run build

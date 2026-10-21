@@ -9,7 +9,7 @@ import tseslint from 'typescript-eslint'
 export default defineConfig([
   globalIgnores(['dist']),
   {
-    files: ['**/*.{ts,tsx}'],
+    files: ['src/**/*.{ts,tsx}', 'vite.config.ts'],
     extends: [
       js.configs.recommended,
       tseslint.configs.recommendedTypeChecked,
@@ -23,6 +23,14 @@ export default defineConfig([
       },
       ecmaVersion: 2020,
       globals: globals.browser,
+    },
+  },
+  {
+    files: ['tests/**/*.ts'],
+    extends: [js.configs.recommended, tseslint.configs.recommended],
+    languageOptions: {
+      ecmaVersion: 2023,
+      globals: globals.node,
     },
   },
 ])

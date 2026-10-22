@@ -20,6 +20,15 @@ Scripts importantes:
 - `npm run check` — `lint` + `build`
 - `npm test` — pruebas reales de traducción, presentación, puntuación, ingredientes y búsqueda
 
+Pruebas y evidencia técnica:
+
+- `npm ci` — instalación reproducible con el lockfile validado.
+- `npm test` — cinco pruebas TypeScript de normalización y traducción, presentación de recetas, calificaciones, ingredientes y búsqueda.
+- `npm run lint` y `npm run build` — reglas ESLint y comprobación estricta de tipos antes del build.
+- [Última CI en GitHub](https://github.com/MelgarejoMaycol/Recetas-TS/actions/workflows/ci.yml).
+
+Este es un proyecto formativo con código visible. Las pruebas unitarias no sustituyen un E2E de los formularios o una prueba de integración con la API.
+
 Archivos importantes:
 - `src/` — código fuente React/TSX
 - `src/config/consultas.tsx` — cliente API y utilidades de red

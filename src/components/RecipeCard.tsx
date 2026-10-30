@@ -1,5 +1,6 @@
 import type { Receta } from '../config/consultas';
-import { getAverageRating, getRecipeDisplay } from '../utils/recipeText';
+import { getAverageRating } from '../utils/recipeText';
+import { useSpanishRecipe } from '../hooks/useSpanishRecipe';
 
 interface RecipeCardProps {
     recipe: Receta;
@@ -11,7 +12,7 @@ const fallbackImage =
     'https://images.unsplash.com/photo-1495521821757-a1efb6729352?auto=format&fit=crop&w=900&q=80';
 
 const RecipeCard = ({ recipe, variant = 'featured', onSelect }: RecipeCardProps) => {
-    const display = getRecipeDisplay(recipe);
+    const display = useSpanishRecipe(recipe);
     const rating = getAverageRating(recipe);
     const time = Number(recipe.tiempo_preparacion) > 0 ? `${recipe.tiempo_preparacion} min` : 'Tiempo pendiente';
     const portions = Number(recipe.porciones) > 0 ? `${recipe.porciones} porciones` : 'Porciones pendientes';

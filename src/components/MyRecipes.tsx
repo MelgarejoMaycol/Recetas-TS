@@ -11,6 +11,8 @@ interface MyRecipesProps {
     onUpdate: (recipeId: number, payload: ActualizarRecetaPayload, onProgress?: (progress: number) => void) => Promise<void>;
     onDelete: (recipeId: number) => Promise<void>;
     onSelectRecipe?: (recipe: Receta) => void;
+    demoMode?: boolean;
+    onAuthRequired?: (action: string) => void;
 }
 
 const emptyRecipe = {
@@ -23,7 +25,7 @@ const emptyRecipe = {
     categoria_id: 0,
 };
 
-const MyRecipes = ({ recipes, categories, ingredientsCatalog, onCreate, onUpdate, onDelete, onSelectRecipe }: MyRecipesProps) => {
+const MyRecipes = ({ recipes, categories, ingredientsCatalog, onCreate, onUpdate, onDelete, onSelectRecipe, demoMode = false, onAuthRequired }: MyRecipesProps) => {
     const [showForm, setShowForm] = useState(false);
     const [form, setForm] = useState(emptyRecipe);
     const [editingRecipe, setEditingRecipe] = useState<Receta | null>(null);
@@ -107,6 +109,10 @@ const MyRecipes = ({ recipes, categories, ingredientsCatalog, onCreate, onUpdate
 
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
+        if (demoMode) {
+            onAuthRequired?.('publicar tu receta');
+            return;
+        }
         if (!canSubmit) return;
 
         setIsSubmitting(true);
@@ -138,7 +144,9 @@ const MyRecipes = ({ recipes, categories, ingredientsCatalog, onCreate, onUpdate
                 <div>
                     <p className="eyebrow">Mis recetas</p>
                     <h2>Recetas propias</h2>
-                    <p className="section-copy">Crea recetas completas y administra tus publicaciones.</p>
+                    <p className="section-copy">{demoMode
+                        ? 'Explora el formulario real de creación. Para publicar y administrar tus recetas necesitas una cuenta.'
+                        : 'Crea recetas completas y administra tus publicaciones.'}</p>
                 </div>
                 <button className="primary-button" type="button" onClick={() => {
                     if (showForm) {
@@ -154,6 +162,12 @@ const MyRecipes = ({ recipes, categories, ingredientsCatalog, onCreate, onUpdate
 
             {showForm && (
                 <form className="create-form create-form--rich" onSubmit={(event) => void handleSubmit(event)}>
+                    {demoMode && (
+                        <div className="demo-readonly-note" role="note">
+                            Vista previa interactiva: puedes completar el formulario, añadir ingredientes y pasos. Nada se guardará ni se enviará al servidor sin iniciar sesión.
+                            {(!categories.length || !ingredientsCatalog.length) && ' Las categorías y los ingredientes estarán disponibles cuando el servidor responda.'}
+                        </div>
+                    )}
                     <div
                         className={`image-dropzone ${isDragging ? 'dragging' : ''}`}
                         onDragOver={(event) => {
@@ -314,8 +328,13 @@ const MyRecipes = ({ recipes, categories, ingredientsCatalog, onCreate, onUpdate
                         </div>
                     )}
 
-                    <button className="primary-button" type="submit" disabled={!canSubmit}>
-                        {isSubmitting ? 'Guardando receta...' : editingRecipe ? 'Actualizar receta' : 'Guardar receta'}
+                    <button
+                        className="primary-button"
+                        type={demoMode ? 'button' : 'submit'}
+                        onClick={demoMode ? () => onAuthRequired?.('guardar y publicar tu receta') : undefined}
+                        disabled={!demoMode && !canSubmit}
+                    >
+                        {demoMode ? 'Guardar receta (requiere cuenta)' : isSubmitting ? 'Guardando receta...' : editingRecipe ? 'Actualizar receta' : 'Guardar receta'}
                     </button>
                 </form>
             )}
@@ -336,7 +355,17 @@ const MyRecipes = ({ recipes, categories, ingredientsCatalog, onCreate, onUpdate
                         </div>
                     ))
                 ) : (
-                    <div className="empty-state">Aun no hay recetas propias que coincidan con los filtros.</div>
+                    demoMode ? (
+                        <div className="empty-state demo-empty-state">
+                            <strong>Tu colección de recetas aparecerá aquí.</strong>
+                            <p>Al crear una cuenta podrás publicar tus platos, editarlos y eliminarlos desde este panel.</p>
+                            <button className="secondary-inline-button" type="button" onClick={() => onAuthRequired?.('administrar tus propias recetas')}>
+                                Crear cuenta para empezar
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="empty-state">Aun no hay recetas propias que coincidan con los filtros.</div>
+                    )
                 )}
             </div>
         </section>

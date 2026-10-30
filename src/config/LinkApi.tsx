@@ -1,3 +1,3 @@
-const ApiLink = "https://recetas-api-j4p8.onrender.com";
+const ApiLink = "https://recetas-api-k91i.onrender.com";
 
 export default ApiLink;

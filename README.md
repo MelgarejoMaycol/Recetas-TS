@@ -7,6 +7,18 @@ Demo desplegada: https://recetas-ts.vercel.app/
 Autor:
 - Maycol Melgarejo — mfmelgarejo04@gmail.com
 
+## Para quien revisa el proyecto en una candidatura
+
+- **Abrir la aplicación:** https://recetas-ts.vercel.app/
+- **Ver las consultas a la API:** [`src/config/consultas.tsx`](src/config/consultas.tsx).
+- **Revisar cómo se presentan y traducen las recetas:** [`src/utils/recipeText.ts`](src/utils/recipeText.ts).
+- **Inspeccionar las pruebas:** [`tests/recipeText.test.ts`](tests/recipeText.test.ts).
+- **Comprobar la CI:** [GitHub Actions](https://github.com/MelgarejoMaycol/Recetas-TS/actions/workflows/ci.yml).
+
+Para ejecutar localmente: `npm ci`, `npm test`, `npm run lint` y `npm run build`. Las pruebas actuales cubren utilidades de búsqueda, texto y presentación; **no** constituyen pruebas end-to-end de todos los flujos de pantalla.
+
+Este frontend es un proyecto formativo independiente. No se debe confundir con mi repositorio [Recetas API](https://github.com/MelgarejoMaycol/recetas-api), que demuestra trabajo con Node.js, PostgreSQL y Swagger.
+
 Resumen:
 - Frontend con Vite, React 19 y TypeScript
 - Rutas con `react-router-dom`

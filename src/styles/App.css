@@ -1329,8 +1329,8 @@ button:hover {
 }
 
 .demo-tabs {
-    grid-template-columns: repeat(2, minmax(110px, 1fr));
-    width: min(360px, 100%);
+    grid-template-columns: repeat(4, minmax(110px, 1fr));
+    width: min(680px, 100%);
 }
 
 .demo-readonly-note {
@@ -1360,6 +1360,111 @@ button:hover {
     }
 
     .server-status .secondary-inline-button {
+        width: 100%;
+    }
+}
+
+
+.demo-empty-state {
+    display: grid;
+    justify-items: center;
+    gap: 12px;
+    line-height: 1.5;
+}
+
+.demo-empty-state strong {
+    color: #172033;
+    font-size: 1.1rem;
+}
+
+.demo-empty-state p {
+    max-width: 570px;
+    margin: 0;
+    font-weight: 400;
+}
+
+.demo-empty-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+}
+
+.demo-auth-backdrop {
+    z-index: 80;
+}
+
+.demo-auth-dialog {
+    position: relative;
+    width: min(450px, 100%);
+    padding: 32px;
+    border-radius: 14px;
+    background: #ffffff;
+    box-shadow: 0 28px 70px rgba(2, 8, 23, 0.3);
+}
+
+.demo-auth-dialog .eyebrow {
+    margin: 0 0 12px;
+}
+
+.demo-auth-dialog h2 {
+    margin: 0 28px 12px 0;
+    font-size: clamp(1.4rem, 4vw, 1.8rem);
+    line-height: 1.2;
+}
+
+.demo-auth-dialog p:not(.eyebrow) {
+    margin: 0 0 22px;
+    color: #64748b;
+    line-height: 1.6;
+}
+
+.demo-auth-close {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    width: 34px;
+    height: 34px;
+    border: 0;
+    border-radius: 50%;
+    background: #f1f5f9;
+    color: #334155;
+    font-size: 1.2rem;
+    cursor: pointer;
+}
+
+.demo-auth-actions {
+    display: grid;
+    gap: 10px;
+}
+
+.demo-auth-actions button {
+    width: 100%;
+}
+
+.demo-auth-dismiss {
+    display: block;
+    margin: 18px auto 0;
+    padding: 6px 12px;
+    border: 0;
+    background: none;
+    color: #475569;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+@media (max-width: 640px) {
+    .demo-tabs {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        width: 100%;
+    }
+
+    .demo-auth-dialog {
+        padding: 26px 20px;
+    }
+
+    .demo-empty-actions,
+    .demo-empty-actions button {
         width: 100%;
     }
 }

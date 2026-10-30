@@ -244,9 +244,9 @@ const Demo = () => {
                         ingredientsCatalog={ingredientsCatalog}
                         demoMode
                         onAuthRequired={setAuthAction}
-                        onCreate={async () => { setAuthAction('publicar tu receta'); }}
-                        onUpdate={async () => { setAuthAction('editar tus recetas'); }}
-                        onDelete={async () => { setAuthAction('eliminar tus recetas'); }}
+                        onCreate={() => { setAuthAction('publicar tu receta'); return Promise.resolve(); }}
+                        onUpdate={() => { setAuthAction('editar tus recetas'); return Promise.resolve(); }}
+                        onDelete={() => { setAuthAction('eliminar tus recetas'); return Promise.resolve(); }}
                     />
                 ) : activeView === 'favorites' ? (
                     <section className="recipes-section">

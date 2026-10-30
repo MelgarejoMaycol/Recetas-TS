@@ -90,10 +90,11 @@ export const splitTranslationSegments = (text: string): string[] => {
     return segments;
 };
 
+const htmlEntities: Record<string, string> = {
+    '&amp;': '&', '&quot;': '"', '&apos;': "'", '&#39;': "'", '&lt;': '<', '&gt;': '>',
+};
 const decodeEntities = (text: string): string =>
-    text.replace(/&(?:amp|quot|apos|lt|gt|#39);/g, (value) => ({
-        '&amp;': '&', '&quot;': '"', '&apos;': "'", '&#39;': "'", '&lt;': '<', '&gt;': '>',
-    })[value] ?? value);
+    text.replace(/&(?:amp|quot|apos|lt|gt|#39);/g, (value) => htmlEntities[value] ?? value);
 
 const fetchTranslation = async (text: string): Promise<string> =>
     limitConcurrency(async () => {

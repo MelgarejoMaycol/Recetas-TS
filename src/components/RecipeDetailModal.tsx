@@ -11,6 +11,7 @@ interface RecipeDetailModalProps {
     actionMessage: string;
     isFavorite: boolean;
     readOnly?: boolean;
+    onAuthRequired?: (action: string) => void;
     onToggleFavorite?: () => Promise<void>;
     onCreateComment?: (comment: string, rating: number) => Promise<void>;
     onClose: () => void;
@@ -27,6 +28,7 @@ const RecipeDetailModal = ({
     actionMessage,
     isFavorite,
     readOnly = false,
+    onAuthRequired,
     onToggleFavorite,
     onCreateComment,
     onClose,
@@ -75,6 +77,10 @@ const RecipeDetailModal = ({
     };
 
     const handleToggleFavorite = async () => {
+        if (readOnly) {
+            onAuthRequired?.('guardar recetas favoritas');
+            return;
+        }
         if (!onToggleFavorite) return;
         setIsFavoriteLoading(true);
         await onToggleFavorite();
@@ -106,14 +112,14 @@ const RecipeDetailModal = ({
                             <span>{currentRecipe.porciones || 0} porciones</span>
                             <span>{display.difficulty}</span>
                         </div>
-                        {!readOnly && (
+                        {(!readOnly || onAuthRequired) && (
                             <button
                                 type="button"
                                 className={`favorite-button ${isFavorite ? 'active' : ''}`}
                                 onClick={() => void handleToggleFavorite()}
                                 disabled={loading || isFavoriteLoading}
                             >
-                                {isFavorite ? 'Quitar de favoritos' : 'Agregar a favoritos'}
+                                {readOnly ? 'Agregar a favoritas' : isFavorite ? 'Quitar de favoritos' : 'Agregar a favoritos'}
                             </button>
                         )}
                     </div>
@@ -184,11 +190,12 @@ const RecipeDetailModal = ({
 
                         <section className="detail-panel detail-panel--comments">
                             <h3>Comentarios</h3>
-                            {readOnly ? (
+                            {readOnly && (
                                 <div className="demo-readonly-note">
-                                    Estas viendo el modo de exploracion. Inicia sesion para guardar favoritos o publicar comentarios.
+                                    En el modo demo puedes conocer los comentarios y las valoraciones. Crea una cuenta para publicar los tuyos.
                                 </div>
-                            ) : (
+                            )}
+                            {(!readOnly || onAuthRequired) && (
                                 <form className="comment-form" onSubmit={(event) => void handleSubmitComment(event)}>
                                     <label>
                                         Calificacion
@@ -211,8 +218,13 @@ const RecipeDetailModal = ({
                                             required
                                         />
                                     </label>
-                                    <button type="submit" className="primary-button" disabled={isSubmitting || comment.trim().length < 2}>
-                                        {isSubmitting ? 'Publicando...' : 'Publicar comentario'}
+                                    <button
+                                        type={readOnly ? 'button' : 'submit'}
+                                        className="primary-button"
+                                        onClick={readOnly ? () => onAuthRequired?.('publicar comentarios y valoraciones') : undefined}
+                                        disabled={!readOnly && (isSubmitting || comment.trim().length < 2)}
+                                    >
+                                        {readOnly ? 'Publicar comentario (requiere cuenta)' : isSubmitting ? 'Publicando...' : 'Publicar comentario'}
                                     </button>
                                 </form>
                             )}

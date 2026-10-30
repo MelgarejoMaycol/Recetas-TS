@@ -76,11 +76,11 @@ const RecipeDetailModal = ({
     }, [recipe]);
 
     // La llamada al hook debe hacerse siempre, incluso con el modal cerrado.
-    const currentRecipe = detail?.recipe ?? recipe;
-    const display = useSpanishRecipe(currentRecipe ?? {
+    const currentRecipe = detail?.recipe ?? recipe ?? {
         id: 0, nombre: '', descripcion: '', pais: '', imagen_url: '',
         tiempo_preparacion: 0, porciones: 0, dificultad: '', categoria_id: 0,
-    });
+    };
+    const display = useSpanishRecipe(currentRecipe);
 
     if (!recipe) return null;
     const ingredients = detail?.ingredients ?? [];

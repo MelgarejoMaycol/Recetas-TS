@@ -359,9 +359,17 @@ const MyRecipes = ({ recipes, categories, ingredientsCatalog, onCreate, onUpdate
                         <div className="empty-state demo-empty-state">
                             <strong>Tu colección de recetas aparecerá aquí.</strong>
                             <p>Al crear una cuenta podrás publicar tus platos, editarlos y eliminarlos desde este panel.</p>
-                            <button className="secondary-inline-button" type="button" onClick={() => onAuthRequired?.('administrar tus propias recetas')}>
-                                Crear cuenta para empezar
-                            </button>
+                            <div className="demo-empty-actions">
+                                <button className="secondary-inline-button" type="button" onClick={() => onAuthRequired?.('editar tus recetas')}>
+                                    Editar receta
+                                </button>
+                                <button className="secondary-inline-button" type="button" onClick={() => onAuthRequired?.('eliminar tus recetas')}>
+                                    Eliminar receta
+                                </button>
+                                <button className="primary-button" type="button" onClick={() => onAuthRequired?.('administrar tus propias recetas')}>
+                                    Crear cuenta para empezar
+                                </button>
+                            </div>
                         </div>
                     ) : (
                         <div className="empty-state">Aun no hay recetas propias que coincidan con los filtros.</div>

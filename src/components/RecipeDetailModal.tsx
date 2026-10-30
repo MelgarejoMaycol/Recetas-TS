@@ -1,7 +1,8 @@
 import type { FormEvent } from 'react';
 import { useEffect, useState } from 'react';
-import type { Receta, RecipeDetail } from '../config/consultas';
-import { getIngredientDisplay, getRecipeDisplay, getStepDisplay } from '../utils/recipeText';
+import type { IngredienteReceta, PreparacionReceta, Receta, RecipeDetail } from '../config/consultas';
+import { getIngredientDisplay } from '../utils/recipeText';
+import { useSpanishRecipe, useSpanishText } from '../hooks/useSpanishRecipe';
 
 interface RecipeDetailModalProps {
     recipe: Receta | null;
@@ -19,6 +20,31 @@ interface RecipeDetailModalProps {
 
 const fallbackImage =
     'https://images.unsplash.com/photo-1495521821757-a1efb6729352?auto=format&fit=crop&w=1200&q=80';
+
+const SpanishIngredient = ({ ingredient, imported }: { ingredient: IngredienteReceta; imported: boolean }) => {
+    const display = getIngredientDisplay(ingredient);
+    const name = useSpanishText(ingredient.nombre_ingrediente, imported, 'value');
+    const category = useSpanishText(ingredient.nombre_categoria, imported, 'value');
+    return (
+        <div className="ingredient-item">
+            <div>
+                <strong>{name || display.name}</strong>
+                <span>{category || display.category}</span>
+            </div>
+            <em>{display.amount}</em>
+        </div>
+    );
+};
+
+const SpanishPreparationStep = ({ step, imported }: { step: PreparacionReceta; imported: boolean }) => {
+    const description = useSpanishText(step.descripcion, imported);
+    return (
+        <li>
+            <span>{step.numero_paso}</span>
+            <p>{description}</p>
+        </li>
+    );
+};
 
 const RecipeDetailModal = ({
     recipe,
@@ -49,14 +75,18 @@ const RecipeDetailModal = ({
         };
     }, [recipe]);
 
-    if (!recipe) return null;
-
+    // La llamada al hook debe hacerse siempre, incluso con el modal cerrado.
     const currentRecipe = detail?.recipe ?? recipe;
+    const display = useSpanishRecipe(currentRecipe ?? {
+        id: 0, nombre: '', descripcion: '', pais: '', imagen_url: '',
+        tiempo_preparacion: 0, porciones: 0, dificultad: '', categoria_id: 0,
+    });
+
+    if (!recipe) return null;
     const ingredients = detail?.ingredients ?? [];
     const preparations = detail?.preparations ?? [];
     const comments = detail?.comments ?? [];
     const favoriteCount = detail?.favoriteCount ?? 0;
-    const display = getRecipeDisplay(currentRecipe);
     const scoreCount = comments.filter((comment) => Number(comment.calificacion) > 0).length;
     const averageScore = scoreCount > 0
         ? comments.reduce((sum, comment) => sum + Number(comment.calificacion || 0), 0) / scoreCount
@@ -158,13 +188,7 @@ const RecipeDetailModal = ({
                             {ingredients.length > 0 ? (
                                 <div className="ingredient-list">
                                     {ingredients.map((ingredient) => (
-                                        <div key={ingredient.id} className="ingredient-item">
-                                            <div>
-                                                <strong>{getIngredientDisplay(ingredient).name}</strong>
-                                                <span>{getIngredientDisplay(ingredient).category}</span>
-                                            </div>
-                                            <em>{getIngredientDisplay(ingredient).amount}</em>
-                                        </div>
+                                        <SpanishIngredient key={ingredient.id} ingredient={ingredient} imported={display.imported} />
                                     ))}
                                 </div>
                             ) : (
@@ -177,10 +201,7 @@ const RecipeDetailModal = ({
                             {preparations.length > 0 ? (
                                 <ol className="steps-list">
                                     {preparations.map((step) => (
-                                        <li key={step.id}>
-                                            <span>{step.numero_paso}</span>
-                                            <p>{getStepDisplay(step)}</p>
-                                        </li>
+                                        <SpanishPreparationStep key={step.id} step={step} imported={display.imported} />
                                     ))}
                                 </ol>
                             ) : (

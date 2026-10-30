@@ -206,7 +206,7 @@ export const translateText = (value?: string | null) => {
 export const translateMeasure = (value?: string | null) => {
     const text = value?.trim();
     if (!text) return '';
-    return text.replace(/\\b(tablespoons?|teaspoons?|cups?|grams?|ounces?|liters?|pinches|pinch|tbsp|tsp|lbs?|pounds?)\\b/gi, (unit) => {
+    return text.replace(/\b(tablespoons?|teaspoons?|cups?|grams?|ounces?|liters?|pinches|pinch|tbsp|tsp|lbs?|pounds?)\b/gi, (unit) => {
         const units: Record<string, string> = {
             tablespoon: 'cucharada', tablespoons: 'cucharadas',
             teaspoon: 'cucharadita', teaspoons: 'cucharaditas',
